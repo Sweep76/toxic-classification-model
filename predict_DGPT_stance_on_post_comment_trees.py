@@ -200,4 +200,22 @@ class GPT2ForOC_S_stance(GPT2LMHeadModel):
 				head_mask=head_mask,
 				inputs_embeds=inputs_embeds,
 			)
+			# Type of outputs = BaseModelOutputWithPastAndCrossAttentions
+			# ref: https://huggingface.co/transformers/_modules/transformers/modeling_outputs.html#BaseModelOutputWithPastAndCrossAttentions
+			GPT2_last_layer_output = outputs.last_hidden_state
+
+			# Get the hidden representations for the EOS token ids
+			eos_toward_token_representation = GPT2_last_layer_output[eos_toward_token_ids[0], eos_toward_token_ids[1], :]
+			eos_response_token_representation = GPT2_last_layer_output[eos_response_token_ids[0], eos_response_token_ids[1], :]
+			difference1 = eos_toward_token_representation - eos_response_token_representation
+			hadamard = eos_toward_token_representation * eos_response_token_representation
+			stance_classifier_input = torch.cat([eos_toward_token_representation, eos_response_token_representation, difference1, hadamard], axis=1)
+			# Apply dropout
+			stance_classifier_input = self.dropout(stance_classifier_input)
+			# Compute stance logits from concatenated eos representations
+			stance_logits = self.stance_classifier(stance_classifier_input)
+
+
+			outputs = (stance_logits,) + outputs[2:]
+			# If stance_labels given, compute loss from stance_logits
 			
