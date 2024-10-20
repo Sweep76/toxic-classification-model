@@ -95,3 +95,29 @@ def reweight(cls_num_list, beta=0.9999):
 	#                              END OF YOUR CODE                             #
 	#############################################################################
 	return per_cls_weights
+
+class FocalLoss(nn.Module):
+	def __init__(self, weight=None, gamma=1.0):
+		super(FocalLoss, self).__init__()
+		assert gamma >= 0
+		self.gamma = gamma
+		self.weight = weight
+
+	def forward(self, input, target):
+		'''
+		Implement forward of focal loss
+		:param input: input predictions
+		:param target: labels
+		:return: tensor of focal loss in scalar
+		'''
+		loss = None
+		zi = -input
+		batch_size = input.size(0)
+		zi[torch.arange(batch_size), target] *= -1
+		pis = F.sigmoid(zi)
+		first_term = (1-pis) ** self.gamma
+		second_term = torch.log(pis)
+		multipled = torch.einsum("bj,bj->b", (first_term, second_term))
+		class_weights = self.weight[target].float().to(device)
+		loss = -class_weights.dot(multipled)
+		return loss
