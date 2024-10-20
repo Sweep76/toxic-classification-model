@@ -137,3 +137,19 @@ class GPT2ForOC_S_stance(GPT2LMHeadModel):
 		self.stance_classifier = nn.Linear(config.hidden_size*4, self.num_stance_labels)
 		# self.init_weights()
 		config.focal_loss = True
+		if config.focal_loss:
+			# Instantiate using Focal loss
+			weight = reweight(config.cls_num_list)
+			self.stance_loss_fct = FocalLoss(weight=weight, gamma=1.0)
+			logging.info(f"Using Class balanced focal loss with beta = 0.9999 and gamma = 1.0")
+		else:
+			# self.stance_loss_fct = nn.CrossEntropyLoss()
+			# logging.info(f"Using Cross Entropy loss with no weights")
+			# self.stance_loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 10.0, 10.0]))
+			# logging.info(f"Using Cross Entropy loss with weights [1.0, 10.0, 10.0]")
+			self.stance_loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 100.0, 100.0]))
+			logging.info(f"Using Cross Entropy loss with weights [1.0, 100.0, 100.0]")
+		# self.target_loss_fct = nn.BCEWithLogitsLoss()
+		# self.stance_loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 100.0, 100.0]))
+		# self.stance_loss_multiplier = 2.0
+			
