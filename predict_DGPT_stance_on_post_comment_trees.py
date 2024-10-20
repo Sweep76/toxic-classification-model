@@ -121,3 +121,19 @@ class FocalLoss(nn.Module):
 		class_weights = self.weight[target].float().to(device)
 		loss = -class_weights.dot(multipled)
 		return loss
+	
+
+class GPT2ForOC_S_stance(GPT2LMHeadModel):
+	def __init__(self, config):
+		super().__init__(config)
+		self.num_off_labels = 2
+		self.num_stance_labels = 3
+		# logging.info(f"Number of off labels for GPT2ForOC_S_stance classifier = {self.num_off_labels}")
+		# logging.info(f"Number of target labels for GPT2ForOC_S_stance classifier = {len(TARGET_GROUPS)}")
+		logging.info(f"Number of stance labels for GPT2ForOC_S_stance classifier = {self.num_stance_labels}")
+		self.dropout = nn.Dropout(config.embd_pdrop)
+		# self.off_classifier = nn.Linear(config.hidden_size, self.num_off_labels)
+		# self.target_classifier = nn.Linear(config.hidden_size, len(TARGET_GROUPS))
+		self.stance_classifier = nn.Linear(config.hidden_size*4, self.num_stance_labels)
+		# self.init_weights()
+		config.focal_loss = True
