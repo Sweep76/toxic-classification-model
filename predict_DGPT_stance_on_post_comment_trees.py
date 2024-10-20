@@ -218,4 +218,18 @@ class GPT2ForOC_S_stance(GPT2LMHeadModel):
 
 			outputs = (stance_logits,) + outputs[2:]
 			# If stance_labels given, compute loss from stance_logits
+
+			loss = 0.0
+			if stance_labels is not None:
+				loss = self.stance_loss_fct(stance_logits.view(-1, self.num_stance_labels), stance_labels.view(-1))
+				# print(f"input ids = {input_ids}, DGPT outputs shape = {GPT2_last_layer_output.size()} vs nan count = {torch.isnan(GPT2_last_layer_output).sum()}")
+				# print(f"Off logits = {stance_logits} vs Off labels = {off_labels}")
+				# if target_labels is not None:
+				# 	# Some of the target_labels can still be None. We have to ignore loss for these target labels
+				# 	for i, target_label in enumerate(target_labels):
+				# 		if target_label is not None:
+				# 			loss += self.target_loss_fct(target_logits[i], target_label.to(device))
+				outputs = (loss,) + outputs
+
+			return outputs  # (loss), logits, (hidden_states), (attentions)
 			
