@@ -233,3 +233,5 @@ class GPT2ForOC_S_stance(GPT2LMHeadModel):
 
 			return outputs  # (loss), logits, (hidden_states), (attentions)
 			
+
+def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
