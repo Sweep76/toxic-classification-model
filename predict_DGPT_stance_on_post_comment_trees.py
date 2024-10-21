@@ -293,3 +293,21 @@ def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
 	return {"input_ids": input_ids, "eos_token_ids": eos_token_ids, "gold_stance_u_id_pairs": gold_stance_u_id_pairs, "eos_toward_token_ids": eos_toward_token_ids, "eos_response_token_ids": eos_response_token_ids, "input_str": all_GPT2_model_input_texts, "n_utterances": per_instance_n_utterances, "batch_threads": current_threads}
 
 ### Similar code for Offensive prediction
+
+class GPT2ForOC_S_offensive(GPT2LMHeadModel):
+	def __init__(self, config):
+		super().__init__(config)
+		self.num_off_labels = 2
+		self.num_stance_labels = 3
+		logging.info(f"Number of off labels for GPT2ForOC_S_offensive classifier = {self.num_off_labels}")
+		# logging.info(f"Number of target labels for GPT2ForOC_S_offensive classifier = {len(TARGET_GROUPS)}")
+		# logging.info(f"Number of stance labels for GPT2ForOC_S_offensive classifier = {self.num_stance_labels}")
+		self.dropout = nn.Dropout(config.embd_pdrop)
+		self.off_classifier = nn.Linear(config.hidden_size, self.num_off_labels)
+		# self.target_classifier = nn.Linear(config.hidden_size, len(TARGET_GROUPS))
+		# self.stance_classifier = nn.Linear(config.hidden_size*4, self.num_stance_labels)
+		# self.init_weights()
+		self.loss_fct = nn.CrossEntropyLoss()
+		# self.target_loss_fct = nn.BCEWithLogitsLoss()
+		# self.stance_loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 100.0, 100.0]))
+		# self.stance_loss_multiplier = 2.0
