@@ -242,3 +242,8 @@ def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
 		GPT2_string = post_thread.replace(" EOS ", tokenizer.eos_token)
 		all_GPT2_model_input_texts.append(GPT2_string)
 		n_utterances = len([u for u in post_thread.split(" EOS ") if u])
+		per_instance_n_utterances.append(n_utterances)
+		# Create stance u_id_pairs
+		for u_from in range(2, n_utterances+1):
+			for u_to in range(1, u_from):
+				gold_stance_u_id_pairs.append((i, u_to, u_from))
