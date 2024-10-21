@@ -276,3 +276,20 @@ def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
 	eos_toward_token_ids = list()
 	eos_response_token_ids = list()
 	try:
+		for instance_id, toward_u_id, response_u_id in gold_stance_u_id_pairs:
+			stance_specific_instance_ids.append(instance_id)
+			eos_toward_token_ids.append(per_instance_per_utterance_eos_ids[instance_id][toward_u_id-1])
+			eos_response_token_ids.append(per_instance_per_utterance_eos_ids[instance_id][response_u_id-1])
+	except IndexError:
+		logging.error(f"Index error at {instance_id}, with {toward_u_id} and {response_u_id}")
+		return None
+	# Convert generated lists into tensors
+	stance_specific_instance_ids = torch.LongTensor(stance_specific_instance_ids)
+	eos_toward_token_ids = torch.LongTensor(eos_toward_token_ids)
+	eos_response_token_ids = torch.LongTensor(eos_response_token_ids)
+	# Convert token_ids into tuples for future processing
+	eos_toward_token_ids = (stance_specific_instance_ids, eos_toward_token_ids)
+	eos_response_token_ids = (stance_specific_instance_ids, eos_response_token_ids)
+	return {"input_ids": input_ids, "eos_token_ids": eos_token_ids, "gold_stance_u_id_pairs": gold_stance_u_id_pairs, "eos_toward_token_ids": eos_toward_token_ids, "eos_response_token_ids": eos_response_token_ids, "input_str": all_GPT2_model_input_texts, "n_utterances": per_instance_n_utterances, "batch_threads": current_threads}
+
+### Similar code for Offensive prediction
