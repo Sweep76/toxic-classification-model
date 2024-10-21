@@ -327,3 +327,64 @@ class GPT2ForOC_S_offensive(GPT2LMHeadModel):
 		# eos_toward_token_ids=None,
 		# eos_response_token_ids=None,
 	):
+		r"""
+		labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`, defaults to :obj:`None`):
+			Labels for computing the sequence classification/regression loss.
+			Indices should be in :obj:`[0, ..., config.num_labels - 1]`.
+			If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
+			If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
+
+	Returns:
+		:obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.GPT2Config`) and inputs:
+		loss (:obj:`torch.FloatTensor` of shape :obj:`(1,)`, `optional`, returned when :obj:`label` is provided):
+			Classification (or regression if config.num_labels==1) loss.
+		logits (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, config.num_labels)`):
+			Classification (or regression if config.num_labels==1) scores (before SoftMax).
+		hidden_states (:obj:`tuple(torch.FloatTensor)`, `optional`, returned when ``config.output_hidden_states=True``):
+			Tuple of :obj:`torch.FloatTensor` (one for the output of the embeddings + one for the output of each layer)
+			of shape :obj:`(batch_size, sequence_length, hidden_size)`.
+
+			Hidden-states of the model at the output of each layer plus the initial embedding outputs.
+		attentions (:obj:`tuple(torch.FloatTensor)`, `optional`, returned when ``config.output_attentions=True``):
+			Tuple of :obj:`torch.FloatTensor` (one for each layer) of shape
+			:obj:`(batch_size, num_heads, sequence_length, sequence_length)`.
+
+			Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
+			heads.
+		"""
+		outputs = self.transformer(
+			input_ids,
+			attention_mask=attention_mask,
+			token_type_ids=token_type_ids,
+			position_ids=position_ids,
+			head_mask=head_mask,
+			inputs_embeds=inputs_embeds,
+		)
+		# Type of outputs = BaseModelOutputWithPastAndCrossAttentions
+		# ref: https://huggingface.co/transformers/_modules/transformers/modeling_outputs.html#BaseModelOutputWithPastAndCrossAttentions
+		GPT2_last_layer_output = outputs.last_hidden_state
+
+		# Extract all EOS token representations from GPT2's last layer representations
+		eos_token_representation = GPT2_last_layer_output[utterance_eos_ids[0], utterance_eos_ids[1], :]
+		# Apply dropout on representations
+		eos_token_representation = self.dropout(eos_token_representation)
+		# Compute logits from cls representations
+		off_logits = self.off_classifier(eos_token_representation)
+		# target_logits = self.target_classifier(eos_token_representation)
+
+		outputs = (off_logits,) + outputs[2:]
+		# If off_labels given, compute loss from off_logits
+		
+		loss = 0.0
+		if off_labels is not None:
+			loss = self.loss_fct(off_logits.view(-1, self.num_off_labels), off_labels.view(-1))
+			# print(f"input ids = {input_ids}, DGPT outputs shape = {GPT2_last_layer_output.size()} vs nan count = {torch.isnan(GPT2_last_layer_output).sum()}")
+			# print(f"Off logits = {off_logits} vs Off labels = {off_labels}")
+			# if target_labels is not None:
+			# 	# Some of the target_labels can still be None. We have to ignore loss for these target labels
+			# 	for i, target_label in enumerate(target_labels):
+			# 		if target_label is not None:
+			# 			loss += self.target_loss_fct(target_logits[i], target_label.to(device))
+			outputs = (loss,) + outputs
+
+		return outputs  # (loss), logits, (hidden_states), (attentions)
