@@ -235,3 +235,5 @@ class GPT2ForOC_S_stance(GPT2LMHeadModel):
 			
 
 def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
+	all_GPT2_model_input_texts = list()
+	gold_stance_u_id_pairs = list()
