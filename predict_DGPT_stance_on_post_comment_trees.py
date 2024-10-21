@@ -263,3 +263,16 @@ def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
 		logging.error(f"One of the instance has length longer than 512 tokens: {input_ids.shape}")
 		logging.error(f"Skipping this batch!")
 		return None
+	
+	# For stance labels create specific eos_token_ids for stance u_id pairs
+	# Compute the per instance per utterance EOS ids
+	per_instance_per_utterance_eos_ids = [list() for i in range(len(current_threads))]
+	instance_ids = eos_token_ids[0].tolist()
+	utterance_eos_ids = eos_token_ids[1].tolist()
+	for instance_id, utterance_eos_id in zip(instance_ids, utterance_eos_ids):
+		per_instance_per_utterance_eos_ids[instance_id].append(utterance_eos_id)
+	# Using the creating list compute the eos_ids for stance u_id pairs
+	stance_specific_instance_ids = list()
+	eos_toward_token_ids = list()
+	eos_response_token_ids = list()
+	try:
