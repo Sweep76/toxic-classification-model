@@ -258,3 +258,8 @@ def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
 	# Convert the pad_token_ids to eos_token_ids as there is no pad token in DGPT model
 	input_ids[input_ids==tokenizer.pad_token_id] = tokenizer.eos_token_id
 	try:
+		assert input_ids.size(1) < 512
+	except AssertionError:
+		logging.error(f"One of the instance has length longer than 512 tokens: {input_ids.shape}")
+		logging.error(f"Skipping this batch!")
+		return None
