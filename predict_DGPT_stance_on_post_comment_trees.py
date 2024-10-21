@@ -311,3 +311,19 @@ class GPT2ForOC_S_offensive(GPT2LMHeadModel):
 		# self.target_loss_fct = nn.BCEWithLogitsLoss()
 		# self.stance_loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 100.0, 100.0]))
 		# self.stance_loss_multiplier = 2.0
+
+	def forward(
+		self,
+		input_ids,
+		utterance_eos_ids,
+		attention_mask=None,
+		token_type_ids=None,
+		position_ids=None,
+		head_mask=None,
+		inputs_embeds=None,
+		off_labels=None,
+		# target_labels=None,
+		# stance_labels=None,
+		# eos_toward_token_ids=None,
+		# eos_response_token_ids=None,
+	):
