@@ -247,3 +247,14 @@ def prepare_threads_for_stance_model_predictions(current_threads, tokenizer):
 		for u_from in range(2, n_utterances+1):
 			for u_to in range(1, u_from):
 				gold_stance_u_id_pairs.append((i, u_to, u_from))
+
+	# Tokenize
+	all_GPT2_model_inputs_tokenized = tokenizer.batch_encode_plus(all_GPT2_model_input_texts, padding=True, add_special_tokens=False, return_tensors="pt")
+	input_ids, attention_mask = all_GPT2_model_inputs_tokenized['input_ids'], all_GPT2_model_inputs_tokenized['attention_mask']
+	# Extract the word_ids of CLS tokens i.e. the beginning of all the utterances
+	eos_token_ids = (input_ids == tokenizer.eos_token_id).nonzero(as_tuple=True)
+
+	assert len(per_instance_n_utterances) == len(current_threads)
+	# Convert the pad_token_ids to eos_token_ids as there is no pad token in DGPT model
+	input_ids[input_ids==tokenizer.pad_token_id] = tokenizer.eos_token_id
+	try:
